@@ -34,14 +34,19 @@
 .agrarnitrat-story.agrarnitrat-story-last {
   padding-bottom: 70vh;
 }
-.agrarnitrat-story p {
-  font-size: 16px;
-}
 .agrarnitrat-story-inner {
   pointer-events: all;
   padding: 5px 15px;
   color: #fff;
   background-color: rgba(80,80,80,127);
+}
+
+.agrarnitrat-story-inner h2, .agrarnitrat-story-inner h3 {
+  color: #fff;
+}
+
+.agrarnitrat-story-inner p {
+  color: #fff;
 }
 
 .hexbin-hexagon {
