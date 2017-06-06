@@ -1,0 +1,49 @@
+.agrarnitrat-container {
+  position: relative;
+}
+.agrarnitrat-mapcontainer {
+  position: absolute;
+  width: 100%;
+  top: 0;
+}
+.agrarnitrat-mapcontainer.is-fixed {
+  position: fixed;
+}
+.agrarnitrat-mapcontainer.is-bottom {
+  top: auto;
+  bottom: 0;
+}
+.agrarnitrat-map {
+  width: 100%;
+  height: 800px;
+  height: 100vh;
+  z-index: 1;
+}
+.agrarnitrat-stories {
+  z-index: 5;
+  position: relative;
+  pointer-events: none;
+}
+.agrarnitrat-story {
+  width: 50%;
+  padding-left: 30%;
+  padding-top: 90vh;
+  padding-bottom: 5vh;
+}
+.agrarnitrat-story.agrarnitrat-story-last {
+  padding-bottom: 70vh;
+}
+.agrarnitrat-story p {
+  font-size: 16px;
+}
+.agrarnitrat-story-inner {
+  pointer-events: all;
+  padding: 5px 15px;
+  color: #fff;
+  background-color: rgba(80,80,80,127);
+}
+
+.hexbin-hexagon {
+  stroke: #000;
+  stroke-width: .5px;
+}

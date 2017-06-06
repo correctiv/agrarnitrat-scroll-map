@@ -1,0 +1,52 @@
+{
+  "name": "agrarnitrat-map-viz",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./src/main.js",
+  "dependencies": {
+    "@asymmetrik/leaflet-d3": "^2.0.3",
+    "d3": "^4.9.1",
+    "d3-hexbin": "^0.2.2",
+    "jquery": "^3.2.1",
+    "leaflet": "^1.0.3",
+    "scrollstory": "^0.3.7",
+    "topojson": "^3.0.0"
+  },
+  "devDependencies": {
+    "babel-eslint": "^7.1.1",
+    "babel-preset-es2015": "^6.9.0",
+    "browserify": "^14.4.0",
+    "browserify-shim": "^3.8.14",
+    "budo": "^10.0.3",
+    "eslint": "^2.10.2",
+    "eslint-plugin-es6-recommended": "^0.1.2",
+    "gulp": "^3.9.1",
+    "gulp-copy": "^1.0.0",
+    "gulp-sourcemaps": "^2.6.0",
+    "gulp-uglify": "^3.0.0",
+    "gulp-util": "^3.0.8",
+    "lodash.assign": "^4.2.0",
+    "topojson-server": "^3.0.0",
+    "topojson-simplify": "^3.0.1",
+    "vinyl-buffer": "^1.0.0",
+    "vinyl-source-stream": "^1.1.0",
+    "watchify": "^3.9.0"
+  },
+  "scripts": {
+    "build": "./node_modules/.bin/gulp build",
+    "dev": "./node_modules/.bin/budo src/main.js:dist/app.js --live"
+  },
+  "browser": {
+    "jquery": "./node_modules/jquery/dist/jquery.js"
+  },
+  "browserify-shim": {
+    "jquery": "$"
+  },
+  "browserify": {
+    "transform": [
+      "browserify-shim"
+    ]
+  },
+  "author": "",
+  "license": "ISC"
+}
