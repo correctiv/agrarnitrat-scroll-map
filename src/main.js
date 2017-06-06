@@ -349,9 +349,11 @@ var AgrarNitratViz = function(el, options) {
   // viewport height
   var viewportHeight = window.innerHeight;
   var halfViewportHeight = Math.floor(viewportHeight / 2);
+  var isFixed, isBottom;
 
   // handle the fixed/static position of grahpic
   var toggle = function(fixed, bottom) {
+    var changed;
     if (fixed) {
       $mapContainer.addClass('is-fixed');
     } else {
@@ -362,6 +364,13 @@ var AgrarNitratViz = function(el, options) {
       $mapContainer.addClass('is-bottom');
     } else {
       $mapContainer.removeClass('is-bottom');
+    }
+    changed = isFixed != fixed;
+    changed = changed || isBottom != bottom;
+    isFixed = fixed;
+    isBottom = bottom;
+    if (changed) {
+      map.invalidateSize();
     }
   };
 
