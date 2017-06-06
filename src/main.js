@@ -110,13 +110,13 @@ var getStateLayer = function(map, options) {
       };
     }
   });
-  getData('data/bundeslaender.topojson', function(data) {
+  getData(options.path + 'data/bundeslaender.topojson', function(data) {
     layer.addData(data);
   });
   return layer;
 };
 
-var getNitrateLayer = function(map) {
+var getNitrateLayer = function(map, options) {
   var thisPane = map.createPane('nitratePane');
   thisPane.style.zIndex = 400;
 
@@ -141,7 +141,7 @@ var getNitrateLayer = function(map) {
       return avg;
     })
 
-  getData('data/nitrate.csv', function(data) {
+  getData(options.path + 'data/nitrate.csv', function(data) {
     hexLayer.data(data);
   });
 
@@ -223,7 +223,7 @@ var AgrarNitratViz = function(el, options) {
 
 
   var stateLayer;
-  var nitrateLayer = getNitrateLayer(map);
+  var nitrateLayer = getNitrateLayer(map, {path: options.path});
   var credits = L.control.attribution().addTo(map);
   var farmMarkers = [];
 
@@ -234,10 +234,10 @@ var AgrarNitratViz = function(el, options) {
 
       setMapView('germany');
       setTileLayer('base');
-      stateLayer = getStateLayer(map);
+      stateLayer = getStateLayer(map, {path: options.path});
       stateLayer.addTo(map);
       // labelLayer.addTo(map);
-      getData('data/betriebe.csv', function(data) {
+      getData(options.path + 'data/betriebe.csv', function(data) {
         radiusScale.domain([0, d3.max(data, function(d) {
           return +d.nh3_yeartotal;
         })]);
@@ -262,7 +262,7 @@ var AgrarNitratViz = function(el, options) {
 
       setMapView('uppergermany');
       setTileLayer('base');
-      stateLayer = getStateLayer(map, {weight: 2});
+      stateLayer = getStateLayer(map, {weight: 2, path: options.path});
       stateLayer.addTo(map);
 
     }
