@@ -159,15 +159,15 @@ var getNitrateLayer = function(map, options) {
 
   hexLayer.bindTooltip('CONTENT');
   hexLayer.dispatch().on('mouseover', function(d, i) {
-    let stations = [];
-    let avg = d3.max(d, function(f) {
+    var stations = [];
+    var avg = d3.max(d, function(f) {
       stations.push(f.o.station_id);
       return +f.o.median;
     });
-    let lat = d3.mean(d, function(f) {
+    var lat = d3.mean(d, function(f) {
       return +f.o.lat;
     });
-    let lng = d3.mean(d, function(f) {
+    var lng = d3.mean(d, function(f) {
       return +f.o.lng;
     });
     hexLayer.openTooltip(L.tooltip({}, hexLayer), [lat, lng])
