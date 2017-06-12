@@ -9,6 +9,7 @@
     "d3-hexbin": "^0.2.2",
     "jquery": "^3.2.1",
     "leaflet": "^1.0.3",
+    "leaflet.gridlayer.googlemutant": "^0.6.2",
     "scrollstory": "^0.3.7",
     "topojson": "^3.0.0"
   },
