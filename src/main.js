@@ -381,11 +381,11 @@ var AgrarNitratViz = function(el, options) {
     m.data.total_subsidies_formatted = formatNumber(m.data.total_subsidies, 2) + '&nbsp;Euro';
     m.data.nh3_yeartotal_formatted = formatNumber(m.data.nh3_yeartotal / 1000, 1).replace('.', ',');
 
-    var s = ['<h3>{original_name}</h3>',
+    var s = ['<h4>{original_name}</h4>',
         '<p>{street}<br/>{postcode} {location}</p>']
     var parent = '';
     if (+m.data.corp_count > 1) {
-      s.push('<h4>Mutterkonzern / Eigentümer</h4>' +
+      s.push('<h5>Mutterkonzern / Eigentümer</h5>' +
                '<p>{corp_name} mit {corp_count} Standorten</p>');
     }
     s = s.concat([
@@ -608,6 +608,7 @@ var AgrarNitratViz = function(el, options) {
       map.dragging.disable();
       map.doubleClickZoom.disable();
       map.keyboard.disable();
+      map.touchZoom.disable();
       if (map.tap) map.tap.disable();
       setMapView('losten');
 
@@ -620,16 +621,23 @@ var AgrarNitratViz = function(el, options) {
         });
         markerPane.style.display = 'block';
       });
+      if (is_touch_device()) {
+        $graphic.find('.agrarnitrat-stories').css('pointer-events', 'all');
+      }
     },
     interactive: function() {
       setMapView('uppergermany');
       bindMarkerPopup();
+      if (is_touch_device()) {
+        $graphic.find('.agrarnitrat-stories').css('pointer-events', 'none');
+      }
       nitrateLayer.addTo(map);
       nitrateLayer.opacity(0.3).redraw();
       // nitrateLayer.getPane().style.opacity = 0.3;
       zoomControl.addTo(map);
       map.dragging.enable();
       map.doubleClickZoom.enable();
+      map.touchZoom.enable();
       map.keyboard.enable();
       if (map.tap) map.tap.enable();
 
@@ -702,6 +710,7 @@ var AgrarNitratViz = function(el, options) {
     isFixed = fixed;
     isBottom = bottom;
     if (changed) {
+      sc.updateOffsets();
 
       if (fixedChanged) {
         if (fixed) {
@@ -719,6 +728,7 @@ var AgrarNitratViz = function(el, options) {
             })
             .on('end', function() {
               map.invalidateSize();
+              sc.updateOffsets();
             })
 
         } else {
@@ -734,6 +744,7 @@ var AgrarNitratViz = function(el, options) {
               $mapContainer.css({left: 'inherit', width: '100%'});
               $mapContainer.removeClass('is-fixed');
               map.invalidateSize();
+              sc.updateOffsets();
             })
         }
       }
@@ -766,13 +777,21 @@ var AgrarNitratViz = function(el, options) {
     toggle(fixed, bottom);
   };
 
-  $graphic.find('.agrarnitrat-stories').scrollStory({
+  function is_touch_device() {
+    return 'ontouchstart' in window        // works on most browsers
+      || navigator.maxTouchPoints;       // works on IE10/11 and Surface
+  };
+
+  if (!is_touch_device()) {
+    $graphic.find('.agrarnitrat-stories').css('pointer-events', 'none');
+  }
+  var sc = $graphic.find('.agrarnitrat-stories').scrollStory({
       contentSelector: '.agrarnitrat-step',
       containerscroll: handleContainerScroll,
       itemfocus: handleItemFocus,
       itemblur: handleItemBlur,
-      triggerOffset: $(window).height() - 20
   });
+  sc = sc.data('plugin_scrollStory');
 
 };
 
