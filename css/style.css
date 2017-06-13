@@ -28,13 +28,22 @@
   pointer-events: none;
 }
 .agrarnitrat-story {
-  padding-top: 85vh;
-  padding-bottom: 5vh;
+  max-width: 720px;
+  margin: auto;
+  padding-top: 5vh;
+  padding-bottom: 85vh;
 
-  /*padding-top: 60vh;
-  padding-bottom: 20vh;*/
+  /*padding-top: 50vh;
+  padding-bottom: 35vh;*/
 
 }
+/*.agrarnitrat-story:not(:first-child):not(:last-child) {
+  margin-top: 85vh;
+  margin-bottom: 5vh;
+  padding-top: 0;
+  padding-bottom: 0;
+}*/
+
 
 .agrarnitrat-story.agrarnitrat-story-last {
   padding-bottom: 70vh;

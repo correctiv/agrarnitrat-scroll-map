@@ -770,7 +770,8 @@ var AgrarNitratViz = function(el, options) {
       contentSelector: '.agrarnitrat-step',
       containerscroll: handleContainerScroll,
       itemfocus: handleItemFocus,
-      itemblur: handleItemBlur
+      itemblur: handleItemBlur,
+      triggerOffset: $(window).height() - 20
   });
 
 };
