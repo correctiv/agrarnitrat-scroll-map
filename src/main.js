@@ -714,7 +714,9 @@ var AgrarNitratViz = function(el, options) {
 
       if (fixedChanged) {
         if (fixed) {
-
+          if(options.enter) {
+            options.enter();
+          }
           $mapContainer.css({left: originalLeft + 'px', width: originalWidth + 'px'});
 
           $mapContainer.addClass('is-fixed');
@@ -732,6 +734,9 @@ var AgrarNitratViz = function(el, options) {
             })
 
         } else {
+          if(options.exit) {
+            options.exit();
+          }
           d3.select($mapContainer[0]).interrupt().transition(t)
             .style('left', originalLeft + 'px').style('width', originalWidth + 'px')
             .attrTween('data-map', function() {

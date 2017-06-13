@@ -280,7 +280,14 @@
         }
       }
       ready(function(){
-        AgrarNitratViz('#agrarnitrat-1', {path: "./"});
+        AgrarNitratViz('#agrarnitrat-1', {path: "./",
+          enter: function(){
+            $('.promo-banner').hide();
+          },
+          exit: function(){
+            $('.promo-banner').show();
+          }
+        });
         AgrarNitratViz('#agrarnitrat-2', {path: "./"});
       });
     </script>
