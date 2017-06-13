@@ -40,13 +40,55 @@
   padding-bottom: 70vh;
 }
 .agrarnitrat-story-interactive {
-  padding-bottom: 110vh;
+  padding-bottom: 100vh;
 }
 
 .agrarnitrat-story-inner {
   pointer-events: all;
   padding: 5px 15px;
+  background-color: #fff;
+}
+
+.agrarnitrat-subsidies {
+  background-color: #ff3388;
+  color: #fff;
+}
+
+.agrarnitrat-legend {
+  display: none;
+  font-size: 10px;
+}
+
+.agrarnitrat-legend-nitrat svg {
+  display: block;
+  padding: 5px 0;
+}
+
+.agrarnitrat-legend-nitrat__left {
+  float: left;
+}
+
+.agrarnitrat-legend-nitrat__right {
+  float: right;
+}
+
+.agrarnitrat-table td {
+  text-align: right;
+}
+
+.is-fixed .agrarnitrat-legend {
+  display: block !important;
+  position: absolute;
+  z-index: 800;
+  bottom: 25px;
+  right: 0;
+  width: 200px;
   background-color: rgba(255,255,255,0.9);
+  padding: 0px 10px;
+}
+
+.is-bottom .agrarnitrat-legend {
+  display: none !important;
 }
 
 .hexbin-hexagon {

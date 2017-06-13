@@ -20,7 +20,7 @@ var tiles = {
     attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
   },
   satellite: {
-    url: 'https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1Ijoic3RlZmFudyIsImEiOiJlc1k5dUVNIn0.EFWNsi1UwZQ1IcbN2_qJLw',
+    url: 'https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoiY29ycmVjdGl2IiwiYSI6ImNpZXZoc2k3dzAwYjZ0cGtzZ3lzcWRxZ3oifQ.D7nZQDnSO4BMLssgleNSSg',
     attribution: '© <a href="https://www.mapbox.com/about/maps/" target="_blank">Mapbox</a><span> © <a href="https://www.digitalglobe.com/" target="_blank">DigitalGlobe</a></span> <a href="https://www.mapbox.com/feedback/" target="_blank">Improve this map</a>',
     mapbox: true
   },
@@ -109,12 +109,13 @@ var subsidiesRadiusScale = d3.scaleSqrt()
 
 var getStateLayer = function(map, options) {
   options = options || {};
-  var thisPane = map.createPane('statePane');
-  thisPane.style.zIndex = 410;
+  map.createPane('states');
+  map.getPane('states').style.pointerEvents = 'none';
+  map.getPane('states').style.zIndex = 390;
 
   var layer = new L.TopoJSON(undefined, {
-    pane: thisPane,
-    style: function(feat){
+    pane: 'states',
+    style: function(feat) {
       return {
         fill: false,
         color: '#999',
@@ -129,11 +130,27 @@ var getStateLayer = function(map, options) {
 };
 
 var getNitrateLayer = function(map, options) {
-  var thisPane = map.createPane('nitratePane');
-  thisPane.style.zIndex = 400;
+  map.createPane('nitrate');
+  map.getPane('nitrate').style.pointerEvents = 'none';
+  map.getPane('nitrate').style.zIndex = 380;
 
-  var hexLayer = L.hexbinLayer({
-    pane: thisPane,
+  var CustomHexbinLayer = L.HexbinLayer.extend({
+    _initContainer : function() {
+      // If the container is null or the overlay pane is empty, create the svg element for drawing
+      if (null == this._container) {
+
+        // The svg is in the overlay pane so it's drawn on top of other base layers
+        var overlayPane = this._map.getPane(this.options.pane);
+
+        // The leaflet-zoom-hide class hides the svg layer when zooming
+        this._container = d3.select(overlayPane).append('svg')
+          .attr('class', 'leaflet-layer leaflet-zoom-hide');
+      }
+    }
+  });
+
+  var hexLayer = new CustomHexbinLayer({
+    pane: 'nitrate',
     radius: 12,
     radiusRange: [ 12, 12],
     // radiusRange: [ 15, 22],
@@ -177,17 +194,51 @@ var getNitrateLayer = function(map, options) {
     hexLayer.closeTooltip();
   });
 
+
+  hexLayer.getLegendSvg = function(el) {
+    var data = hexLayer._scale.color.ticks(4);
+    var width = 200, rw = width / data.length;
+
+    var svg = d3.select(el).append('svg')
+        .attr('width', width)
+        .attr('height', rw / 2)
+
+    var g = svg.append('g');
+    var rects = g.selectAll('rect').data(data)
+    rects.enter().append('rect')
+      .attr('x', function(d, i) {
+        return i * rw;
+      })
+      .attr('y', 0)
+      .attr('width', rw)
+      .attr('height', rw / 2)
+      .style('fill', function(d) {
+        return hexLayer._scale.color(d);
+      });
+  };
+
+  hexLayer.setLegend = function(el) {
+    var html = $('<div class="agrarnitrat-legend-nitrat"></div>')
+    hexLayer.getLegendSvg(html[0])
+    html.append($('<span class="agrarnitrat-legend-nitrat__left">50 mg/l</span>'))
+    html.append($('<span class="agrarnitrat-legend-nitrat__right">300+ mg/l</span>'))
+    el.html(html);
+    el.show();
+  };
+
   return hexLayer;
 };
 
 var getLabelLayer = function(map, credits) {
-  var labelPane = map.createPane('labelPane');
+  map.createPane('labels');
+  map.getPane('labels').style.pointerEvents = 'none';
+  map.getPane('labels').style.zIndex = 610;
+
   var labelLayer = L.tileLayer(tiles.labels.url, {
-      pane: labelPane,
+      pane: 'labels',
       attribution: tiles.labels.attribution
   });
-  labelPane.style.zIndex = 610;
-  labelPane.style.pointerEvents = 'none';
+
   return labelLayer;
 };
 
@@ -197,6 +248,7 @@ var AgrarNitratViz = function(el, options) {
   var $graphic = $(el);
   var $mapContainer = $graphic.find('.agrarnitrat-mapcontainer');
   var mapDiv = $graphic.find('.agrarnitrat-map')[0];
+  var legend = $graphic.find('.agrarnitrat-legend');
 
   var map = L.map(mapDiv, {
     scrollWheelZoom: false,
@@ -299,6 +351,79 @@ var AgrarNitratViz = function(el, options) {
     });
   });
 
+  var formatNumber = function(amount, precision){
+    return (+amount).toFixed(precision).replace(/(\d)(?=(\d{3})+\b)/g,'$1.').replace(/\.(\d{2})$/g, ',$1')
+  };
+
+  var template = function(s, data) {
+    return s.replace(/\{\w+\}/g, function(m) {
+      return data[m.substring(1, m.length - 1)];
+    });
+  };
+
+  var getPopupContent = function(m) {
+    // corp_name : "Meyer, Jürgen"
+    // corp_uid : "48315102-0241-4255-9588-f9c0ebd61d36"
+    // has_local_subsidies : "1"
+    // has_subsidies : "1"
+    // lat : "52.7533533275468"
+    // lng : "8.05544964416346"
+    // local_subsidies : "22204.940000000002"
+    // location : "Essen (Oldenburg)"
+    // nace_code : "146.0"
+    // nh3_2015 : "12000.0"
+    // nh3_yeartotal : "60000.0"
+    // original_name : "Meyer, Jürgen"
+    // postcode : "49632"
+    // street : "Elstener Straße 34"
+    // total_subsidies : "22204.940000000002"
+    m.data.local_subsidies_formatted = formatNumber(m.data.local_subsidies, 2) + '&nbsp;Euro';
+    m.data.total_subsidies_formatted = formatNumber(m.data.total_subsidies, 2) + '&nbsp;Euro';
+    m.data.nh3_yeartotal_formatted = formatNumber(m.data.nh3_yeartotal / 1000, 1).replace('.', ',');
+
+    var s = ['<h3>{original_name}</h3>',
+        '<p>{street}<br/>{postcode} {location}</p>']
+    var parent = '';
+    if (+m.data.corp_count > 1) {
+      s.push('<h4>Mutterkonzern / Eigentümer</h4>' +
+               '<p>{corp_name} mit {corp_count} Standorten</p>');
+    }
+    s = s.concat([
+      '<table class="agrarnitrat-table">',
+      '<thead><caption>Von 2011-2015</caption></thead>',
+      '<tbody><tr><th>Ammoniak-Freisetzung vor Ort</th><td><strong>{nh3_yeartotal_formatted} t</strong></td></tr>'
+    ]);
+    if (+m.data.corp_count > 1) {
+      s = s.concat(['<tr><th>Agrarsubventionen des Konzerns</th><td> <strong>{total_subsidies_formatted}</strong></td></tr>']);
+      if (+m.data.local_subsidies > 0) {
+        s = s.concat(['<tr><th>Agrarsubventionen vor Ort</th><td> <strong>{local_subsidies_formatted}</strong></td></tr>']);
+      }
+    } else {
+      s = s.concat(['<tr><th>Agrarsubventionen vor Ort</th><td> <strong>{local_subsidies_formatted}</strong></td></tr>']);
+    }
+
+    s.push('</tbody></table>');
+
+    return template(s.join('\n'), m.data);
+  };
+
+  var bindMarkerPopup = function() {
+    farmMarkers.forEach(function(m) {
+      m.bindPopup(getPopupContent);
+    });
+  };
+  var unbindMarkerPopup = function() {
+    farmMarkers.forEach(function(m) {
+      m.unbindPopup();
+    });
+  };
+
+  $('.agrarnitrat-smooth-scroll').click(function(e) {
+    e.preventDefault();
+    var href = $(this).attr('href');
+    $('html, body').animate({ scrollTop: $(href).offset().top - 200 }, 1000);
+  });
+
   var labelLayer = getLabelLayer(map, credits);
 
   var initialSetup = {
@@ -316,10 +441,13 @@ var AgrarNitratViz = function(el, options) {
       setMapView('uppergermany');
       setTileLayer('base');
       stateLayer = getStateLayer(map, {weight: 2, path: options.path});
-      stateLayer.addTo(map);
       labelLayer.addTo(map);
       nitrateLayer.addTo(map);
-
+      farmMarkers.forEach(function(m) {
+        m.setStyle({
+          fillColor: +m.data.has_subsidies === 0 ? '#3388ff' : '#ff3388'
+        }).setRadius(nh3RadiusScale(m.data.nh3_yeartotal) * 2);
+      });
     }
   };
 
@@ -365,7 +493,7 @@ var AgrarNitratViz = function(el, options) {
       setTileLayer('base');
       farmMarkers.forEach(function(m) {
         m.setStyle({
-          fillColor: +m.data.has_local_subsidies === 0 ? '#3388ff' : '#ff3388',
+          fillColor: +m.data.has_subsidies === 0 ? '#3388ff' : '#ff3388',
           fillOpacity: 0.6,
         })
       });
@@ -377,7 +505,11 @@ var AgrarNitratViz = function(el, options) {
         if (m.data.corp_uid !== spots.wimex.uid) {
           m.setStyle({
             fillOpacity: 0.1,
-            // stroke: true
+          });
+        } else {
+          m.setStyle({
+            stroke: true,
+            color: '#333'
           });
         }
       });
@@ -421,27 +553,35 @@ var AgrarNitratViz = function(el, options) {
 
     nitrat_intro: function() {
       setMapView('germany');
+      stateLayer.remove();
       nitrateLayer.addTo(map);
+      nitrateLayer.opacity(0.6);
+      nitrateLayer.setLegend(legend);
       markerPane.style.display = 'none';
     },
 
     nitrat: function() {
       setMapView('uppergermany');
+      stateLayer.remove();
       nitrateLayer.addTo(map);
+      nitrateLayer.opacity(0.6);
       markerPane.style.display = 'none';
     },
     region_1: function() {
       // map.removeLayer(nitrateLayer);
+      stateLayer.addTo(map);
       setMapView('schweineguertel');
+      nitrateLayer.opacity(0.6).redraw();
       markerPane.style.display = 'none';
     },
     region_1_detail: function() {
       // map.removeLayer(nitrateLayer);
       setMapView('schweineguertel');
+      nitrateLayer.opacity(0.3).redraw();
 
       farmMarkers.forEach(function(m) {
         m.setStyle({
-          fillColor: +m.data.has_local_subsidies === 0 ? '#3388ff' : '#ff3388'
+          fillColor: +m.data.has_subsidies === 0 ? '#3388ff' : '#ff3388'
         }).setRadius(nh3RadiusScale(m.data.nh3_yeartotal) * 2);
       });
       markerPane.style.display = 'block';
@@ -454,7 +594,7 @@ var AgrarNitratViz = function(el, options) {
         if (currentStoryStep !== 'region_2') { return; }
         farmMarkers.forEach(function(m) {
           m.setStyle({
-            fillColor: +m.data.has_local_subsidies === 0 ? '#3388ff' : '#ff3388'
+            fillColor: +m.data.has_subsidies === 0 ? '#3388ff' : '#ff3388'
           }).setRadius(nh3RadiusScale(m.data.nh3_yeartotal) * 2);
         });
         markerPane.style.display = 'block';
@@ -462,7 +602,7 @@ var AgrarNitratViz = function(el, options) {
     },
     region_3: function() {
       nitrateLayer.addTo(map);
-
+      nitrateLayer.opacity(0.6).redraw();
       zoomControl.remove();
 
       map.dragging.disable();
@@ -475,7 +615,7 @@ var AgrarNitratViz = function(el, options) {
         if (currentStoryStep !== 'region_3') { return; }
         farmMarkers.forEach(function(m) {
           m.setStyle({
-            fillColor: +m.data.has_local_subsidies === 0 ? '#3388ff' : '#ff3388'
+            fillColor: +m.data.has_subsidies === 0 ? '#3388ff' : '#ff3388'
           }).setRadius(nh3RadiusScale(m.data.nh3_yeartotal) * 2);
         });
         markerPane.style.display = 'block';
@@ -483,7 +623,10 @@ var AgrarNitratViz = function(el, options) {
     },
     interactive: function() {
       setMapView('uppergermany');
-      map.removeLayer(nitrateLayer);
+      bindMarkerPopup();
+      nitrateLayer.addTo(map);
+      nitrateLayer.opacity(0.3).redraw();
+      // nitrateLayer.getPane().style.opacity = 0.3;
       zoomControl.addTo(map);
       map.dragging.enable();
       map.doubleClickZoom.enable();
@@ -492,22 +635,21 @@ var AgrarNitratViz = function(el, options) {
 
       farmMarkers.forEach(function(m) {
         m.setStyle({
-          fillColor: +m.data.has_local_subsidies === 0 ? '#3388ff' : '#ff3388'
+          fillColor: +m.data.has_subsidies === 0 ? '#3388ff' : '#ff3388'
         }).setRadius(nh3RadiusScale(m.data.nh3_yeartotal));
       });
       markerPane.style.display = 'block';
-
       map.on('zoomend', function(){
         if (currentStoryStep !== 'interactive') { return; }
         if (map.getZoom() > 9) {
-          nitrateLayer.addTo(map);
+          nitrateLayer.opacity(0.6).redraw();
           farmMarkers.forEach(function(m) {
             m.setStyle({
-              fillColor: +m.data.has_local_subsidies === 0 ? '#3388ff' : '#ff3388'
+              fillColor: +m.data.has_subsidies === 0 ? '#3388ff' : '#ff3388'
             }).setRadius(nh3RadiusScale(m.data.nh3_yeartotal) * 2);
           });
         } else {
-          map.removeLayer(nitrateLayer);
+          nitrateLayer.opacity(0.3).redraw();
         }
       });
     }
